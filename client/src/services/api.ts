@@ -51,3 +51,18 @@ export function createTask(input: {
         body: JSON.stringify(input),
     });
 }
+export function updateTask(
+    id: string,
+    input: Partial<Pick<Task, "title" | "description" | "status" | "priority" | "due_date">>,
+) {
+    return request<Task>(`/tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+    });
+}
+
+export function deleteTask(id: string) {
+    return request<{ id: string }>(`/tasks/${id}`, {
+        method: "DELETE",
+    });
+}

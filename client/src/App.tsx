@@ -1,6 +1,12 @@
 
 import { useEffect, useState } from "react";
-import { createTask, getTasks, type Task } from "./services/api";
+import {
+  createTask,
+  getTasks,
+  updateTask,
+  deleteTask,
+  type Task,
+} from "./services/api";
 
 
 
@@ -12,7 +18,7 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-
+const [actionError, setActionError] = useState("");
   const filteredTasks =
     filter === "all" ? tasks : tasks.filter((task) => task.status === filter);
 
@@ -58,18 +64,47 @@ function App() {
 
     void loadTasks();
   }, []);
-  function toggleTask(taskId: string) {
+async function toggleTask(task: Task) {
+  const nextStatus =
+    task.status === "completed" ? "todo" : "completed";
+
+  try {
+    setActionError("");
+
+    const updatedTask = await updateTask(task.id, {
+      status: nextStatus,
+    });
+
     setTasks((current) =>
-      current.map((task) =>
-        task.id === taskId
-          ? {
-            ...task,
-            status: task.status === "completed" ? "todo" : "completed",
-          }
-          : task,
+      current.map((item) =>
+        item.id === task.id ? updatedTask : item,
       ),
     );
+  } catch (err) {
+    setActionError(
+      err instanceof Error ? err.message : "Failed to update task",
+    );
   }
+}
+async function handleDeleteTask(taskId: string) {
+  if (!window.confirm("Are you sure you want to delete this task?")) {
+    return;
+  }
+
+  try {
+    setActionError("");
+
+    await deleteTask(taskId);
+
+    setTasks((current) =>
+      current.filter((task) => task.id !== taskId),
+    );
+  } catch (err) {
+    setActionError(
+      err instanceof Error ? err.message : "Failed to delete task",
+    );
+  }
+}
 
   const completedCount = tasks.filter(
     (task) => task.status === "completed",
@@ -167,7 +202,11 @@ function App() {
               <option value="completed">Completed</option>
             </select>
           </div>
-
+{actionError && (
+  <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+    {actionError}
+  </p>
+)}
           <div className="mt-5 space-y-3">
             {loading ? (
               <p className="py-8 text-center text-sm text-zinc-500">
@@ -187,7 +226,7 @@ function App() {
                     <input
                       type="checkbox"
                       checked={task.status === "completed"}
-                      onChange={() => toggleTask(task.id)}
+                     onChange={() => void toggleTask(task)}
                       aria-label={`Complete ${task.title}`}
                       className="mt-1 size-4 accent-violet-600"
                     />
@@ -211,7 +250,15 @@ function App() {
                           {task.priority} priority
                         </span>
                       </div>
+
                     </div>
+                    <button
+  type="button"
+  onClick={() => void handleDeleteTask(task.id)}
+  className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+>
+  Delete
+</button>
                   </article>
                 ))}
                 {filteredTasks.length === 0 && (

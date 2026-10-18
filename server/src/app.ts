@@ -6,7 +6,16 @@ import taskRoutes from "./routes/task.routes";
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+];
+
+app.use(
+    cors({
+        origin: allowedOrigins,
+    }),
+);
 app.use(express.json());
 
 app.get("/api/health", async (_req, res) => {

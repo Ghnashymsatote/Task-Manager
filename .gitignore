@@ -1,0 +1,14 @@
+
+# Local environment files
+.env
+.env.*
+!.env.example
+client/.env
+server/.env
+
+# Local Docker override
+compose.override.yaml
+
+# Build output
+client/dist/
+server/dist/

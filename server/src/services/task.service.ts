@@ -31,20 +31,39 @@ export async function createTask(input: CreateTaskInput) {
 
 
 export async function updateTask(id: string, input: UpdateTaskInput) {
+    const allowedFields = [
+        "title",
+        "description",
+        "status",
+        "priority",
+        "due_date",
+    ] as const;
+
     const fields: string[] = [];
     const values: unknown[] = [];
 
-    for (const [key, value] of Object.entries(input)) {
-        values.push(value);
-        fields.push(`${key} = $${values.length}`);
+    for (const key of allowedFields) {
+        const value = input[key];
+
+        if (value !== undefined) {
+            values.push(value);
+            fields.push(`${key} = $${values.length}`);
+        }
+    }
+
+    if (fields.length === 0) {
+        return null;
     }
 
     fields.push("updated_at = NOW()");
     values.push(id);
 
     const result = await pool.query(
-        `UPDATE tasks SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING *`,
-        values
+        `UPDATE tasks
+         SET ${fields.join(", ")}
+         WHERE id = $${values.length}
+         RETURNING *`,
+        values,
     );
 
     return result.rows[0] ?? null;
